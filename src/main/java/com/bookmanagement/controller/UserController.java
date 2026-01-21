@@ -23,7 +23,7 @@ public class UserController {
     
     @PostMapping
     @Operation(summary = "Register a new user")
-    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody NewUserDTO userDTO) {
         UserResponseDTO createdUser = userService.createUser(userDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
@@ -41,7 +41,7 @@ public class UserController {
     @Operation(summary = "Update user")
     public ResponseEntity<UserResponseDTO> updateUser(
             @PathVariable Long id,
-            @Valid @RequestBody UserDTO userDTO) {
+            @Valid @RequestBody UpdateUserDTO userDTO) {
         UserResponseDTO updatedUser = userService.updateUser(id, userDTO);
         return ResponseEntity.ok(updatedUser);
     }

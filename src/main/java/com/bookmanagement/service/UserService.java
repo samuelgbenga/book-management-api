@@ -1,15 +1,16 @@
 package com.bookmanagement.service;
 
-import com.bookmanagement.dto.UserDTO;
+import com.bookmanagement.dto.NewUserDTO;
+import com.bookmanagement.dto.UpdateUserDTO;
 import com.bookmanagement.dto.UserResponseDTO;
 
 public interface UserService {
 
     UserResponseDTO getUserById(Long id);
 
-    UserResponseDTO createUser(UserDTO userDTO);
+    UserResponseDTO createUser(NewUserDTO userDTO);
 
-    UserResponseDTO updateUser(Long id, UserDTO userDTO);
+    UserResponseDTO updateUser(Long id, UpdateUserDTO userDTO);
 
     void deleteUser(Long id);
 }

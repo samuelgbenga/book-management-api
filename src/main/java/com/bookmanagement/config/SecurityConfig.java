@@ -34,6 +34,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Auth endpoints
                 .requestMatchers("/api/auth/**").permitAll()
+                // User registration endpoint
+                .requestMatchers("/api/users").permitAll()
                 // H2 Console
                 .requestMatchers("/h2-console/**").permitAll()
                 // Swagger UI and OpenAPI endpoints

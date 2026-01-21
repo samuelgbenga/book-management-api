@@ -31,7 +31,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserResponseDTO createUser(UserDTO userDTO) {
+    public UserResponseDTO createUser(NewUserDTO userDTO) {
         if (userRepository.findByUsername(userDTO.getUsername()).isPresent()) {
             throw new DuplicateResourceException("Username already exists");
         }
@@ -49,7 +49,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserResponseDTO updateUser(Long id, UserDTO userDTO) {
+    public UserResponseDTO updateUser(Long id, UpdateUserDTO userDTO) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         

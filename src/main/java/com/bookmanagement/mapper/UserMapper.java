@@ -19,6 +19,13 @@ public interface UserMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     User toEntity(UserDTO dto);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "role", expression = "java(mapRole(dto.getRole()))")
+    @Mapping(target = "reviews", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    User toEntity(NewUserDTO dto);
     
     default Role mapRole(String role) {
         return Role.valueOf(role.toUpperCase());
