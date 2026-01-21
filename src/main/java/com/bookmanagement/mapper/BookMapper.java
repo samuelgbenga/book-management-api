@@ -12,6 +12,8 @@ public interface BookMapper {
     @Mapping(target = "authorId", source = "author.id")
     @Mapping(target = "categoryIds", expression = "java(mapCategoryIds(book.getCategories()))")
     BookDTO toDTO(Book book);
+
+    BookMinimalDTO toBookMinimalDTO(Book book);
     
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "author", ignore = true)

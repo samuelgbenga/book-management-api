@@ -7,6 +7,9 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface AuthorMapper {
     AuthorDTO toDTO(Author author);
+
+    AllAuthorDTO toAllDTO(Author author);
+
     AuthorDetailDTO toDetailDTO(Author author);
     AuthorSummaryDTO toSummaryDTO(Author author);
     
@@ -15,4 +18,6 @@ public interface AuthorMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Author toEntity(AuthorDTO dto);
+
+    Author toEntity(NewAuthorDTO dto);
 }

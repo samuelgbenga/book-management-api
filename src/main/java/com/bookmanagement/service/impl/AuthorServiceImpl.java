@@ -26,9 +26,9 @@ public class AuthorServiceImpl implements AuthorService {
     private final AuthorMapper authorMapper;
 
     @Override
-   public List<AuthorDTO> getAllAuthors() {
+   public List<AllAuthorDTO> getAllAuthors() {
         return authorRepository.findAll().stream()
-                .map(authorMapper::toDTO)
+                .map(authorMapper::toAllDTO)
                 .toList();
     }
 
@@ -41,7 +41,7 @@ public class AuthorServiceImpl implements AuthorService {
 
     @Override
      @Transactional
-    public AuthorDTO createAuthor(AuthorDTO authorDTO) {
+    public AuthorDTO createAuthor(NewAuthorDTO authorDTO) {
         if (authorRepository.findByEmail(authorDTO.getEmail()).isPresent()) {
             throw new DuplicateResourceException("Author with email " + authorDTO.getEmail() + " already exists");
         }
@@ -53,7 +53,7 @@ public class AuthorServiceImpl implements AuthorService {
 
     @Override
      @Transactional
-    public AuthorDTO updateAuthor(Long id, AuthorDTO authorDTO) {
+    public AuthorDTO updateAuthor(Long id, NewAuthorDTO authorDTO) {
         Author author = authorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + id));
         

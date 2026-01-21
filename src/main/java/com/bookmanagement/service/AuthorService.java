@@ -1,18 +1,20 @@
 package com.bookmanagement.service;
 
+import com.bookmanagement.dto.AllAuthorDTO;
 import com.bookmanagement.dto.AuthorDTO;
+import com.bookmanagement.dto.NewAuthorDTO;
 
 import java.util.List;
 
 public interface AuthorService {
 
-    List<AuthorDTO> getAllAuthors();
+    List<AllAuthorDTO> getAllAuthors();
 
     AuthorDTO getAuthorById(Long id);
 
-    AuthorDTO createAuthor(AuthorDTO authorDTO);
+    AuthorDTO createAuthor(NewAuthorDTO authorDTO);
 
-    AuthorDTO updateAuthor(Long id, AuthorDTO authorDTO);
+    AuthorDTO updateAuthor(Long id, NewAuthorDTO authorDTO);
 
     void deleteAuthor(Long id);
 }

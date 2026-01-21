@@ -2,7 +2,9 @@ package com.bookmanagement.controller;
 
 import com.bookmanagement.annotation.AdminOnly;
 import com.bookmanagement.annotation.UserOrAdmin;
+import com.bookmanagement.dto.AllAuthorDTO;
 import com.bookmanagement.dto.AuthorDTO;
+import com.bookmanagement.dto.NewAuthorDTO;
 import com.bookmanagement.service.AuthorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -26,8 +28,8 @@ public class AuthorController {
     @GetMapping
     @UserOrAdmin
     @Operation(summary = "Get all authors")
-    public ResponseEntity<List<AuthorDTO>> getAllAuthors() {
-        List<AuthorDTO> authors = authorService.getAllAuthors();
+    public ResponseEntity<List<AllAuthorDTO>> getAllAuthors() {
+        List<AllAuthorDTO> authors = authorService.getAllAuthors();
         return ResponseEntity.ok(authors);
     }
     
@@ -42,7 +44,7 @@ public class AuthorController {
     @PostMapping
     @AdminOnly
     @Operation(summary = "Create a new author (Admin only)")
-    public ResponseEntity<AuthorDTO> createAuthor(@Valid @RequestBody AuthorDTO authorDTO) {
+    public ResponseEntity<AuthorDTO> createAuthor(@Valid @RequestBody NewAuthorDTO authorDTO) {
         AuthorDTO createdAuthor = authorService.createAuthor(authorDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdAuthor);
     }
@@ -52,7 +54,7 @@ public class AuthorController {
     @Operation(summary = "Update an existing author (Admin only)")
     public ResponseEntity<AuthorDTO> updateAuthor(
             @PathVariable Long id,
-            @Valid @RequestBody AuthorDTO authorDTO) {
+            @Valid @RequestBody NewAuthorDTO authorDTO) {
         AuthorDTO updatedAuthor = authorService.updateAuthor(id, authorDTO);
         return ResponseEntity.ok(updatedAuthor);
     }

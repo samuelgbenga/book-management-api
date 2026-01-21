@@ -3,6 +3,7 @@ package com.bookmanagement.controller;
 import com.bookmanagement.annotation.AdminOnly;
 import com.bookmanagement.annotation.UserOrAdmin;
 import com.bookmanagement.dto.CategoryDTO;
+import com.bookmanagement.dto.NewCategoryDTO;
 import com.bookmanagement.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -34,7 +35,7 @@ public class CategoryController {
     @PostMapping
     @AdminOnly
     @Operation(summary = "Create a new category (Admin only)")
-    public ResponseEntity<CategoryDTO> createCategory(@Valid @RequestBody CategoryDTO categoryDTO) {
+    public ResponseEntity<CategoryDTO> createCategory(@Valid @RequestBody NewCategoryDTO categoryDTO) {
         CategoryDTO createdCategory = categoryService.createCategory(categoryDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
     }
@@ -44,7 +45,7 @@ public class CategoryController {
     @Operation(summary = "Update an existing category (Admin only)")
     public ResponseEntity<CategoryDTO> updateCategory(
             @PathVariable Long id,
-            @Valid @RequestBody CategoryDTO categoryDTO) {
+            @Valid @RequestBody NewCategoryDTO categoryDTO) {
         CategoryDTO updatedCategory = categoryService.updateCategory(id, categoryDTO);
         return ResponseEntity.ok(updatedCategory);
     }

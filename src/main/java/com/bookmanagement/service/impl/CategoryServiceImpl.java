@@ -1,6 +1,7 @@
 package com.bookmanagement.service.impl;
 
 import com.bookmanagement.dto.CategoryDTO;
+import com.bookmanagement.dto.NewCategoryDTO;
 import com.bookmanagement.entity.Category;
 import com.bookmanagement.exception.*;
 import com.bookmanagement.mapper.CategoryMapper;
@@ -29,18 +30,20 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public CategoryDTO createCategory(CategoryDTO categoryDTO) {
+    public CategoryDTO createCategory(NewCategoryDTO categoryDTO) {
         if (categoryRepository.findByName(categoryDTO.getName()).isPresent()) {
             throw new DuplicateResourceException("Category with name " + categoryDTO.getName() + " already exists");
         }
-        
-        Category category = categoryMapper.toEntity(categoryDTO);
+
+        Category category = new Category();
+        category.setName(categoryDTO.getName());
         Category savedCategory = categoryRepository.save(category);
         return categoryMapper.toDTO(savedCategory);
     }
+
     @Override
      @Transactional
-    public CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO) {
+    public CategoryDTO updateCategory(Long id, NewCategoryDTO categoryDTO) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
         
