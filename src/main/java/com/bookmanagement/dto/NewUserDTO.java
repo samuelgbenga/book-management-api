@@ -1,5 +1,7 @@
 package com.bookmanagement.dto;
 
+import com.bookmanagement.annotation.ValidPassword;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -21,8 +23,9 @@ public class NewUserDTO {
     @NotBlank(message = "Email is required")
     private String email;
     
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    // @NotBlank(message = "Password is required")
+    // @Size(min = 6, message = "Password must be at least 6 characters")
+    @ValidPassword
     private String password;
     
     @NotBlank(message = "Role is required")

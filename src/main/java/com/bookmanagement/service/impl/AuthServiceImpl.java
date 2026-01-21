@@ -9,7 +9,11 @@ import com.bookmanagement.service.AuthService;
 
 //import com.bookmanagement.security.JwtService;
 import lombok.RequiredArgsConstructor;
+
+import java.util.stream.Collectors;
+
 import org.springframework.security.authentication.*;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,15 +40,17 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         
-        var jwtToken = jwtService.generateToken(
-                new org.springframework.security.core.userdetails.User(
-                        user.getUsername(),
-                        user.getPassword(),
-                        java.util.Collections.singletonList(
-                                new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + user.getRole().name())
-                        )
-                )
+
+
+         // Create UserDetails with ALL roles (consistent with CustomUserDetailsService)
+        var userDetails = new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                user.getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                        .collect(Collectors.toList())
         );
+        var jwtToken = jwtService.generateToken(userDetails);
         
         return AuthResponse.builder()
                 .token(jwtToken)
