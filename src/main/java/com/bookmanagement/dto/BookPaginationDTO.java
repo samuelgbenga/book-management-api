@@ -1,24 +1,24 @@
 package com.bookmanagement.dto;
 
+import lombok.*;
 import java.time.LocalDate;
 import java.util.Set;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+// Book DTOs
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BookDetailDTO {
+public class BookPaginationDTO {
     private Long id;
+  
     private String title;
+
     private String isbn;
+    
     private LocalDate publishedDate;
-    private AuthorDetailDTO author;
+    
+    private AuthorSummaryDTO author;
     private Set<CategoryDTO> categories;
     private Double rating;
-    private Set<ReviewMinimalDTO> reviews;
 }

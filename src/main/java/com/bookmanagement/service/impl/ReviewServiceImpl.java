@@ -1,6 +1,8 @@
 package com.bookmanagement.service.impl;
 
+import com.bookmanagement.dto.NewReviewDTO;
 import com.bookmanagement.dto.ReviewDTO;
+import com.bookmanagement.dto.UpdateReviewDTO;
 import com.bookmanagement.entity.*;
 import com.bookmanagement.exception.ResourceNotFoundException;
 import com.bookmanagement.mapper.ReviewMapper;
@@ -30,7 +32,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
     @Override
     @Transactional
-    public ReviewDTO createReview(Long bookId, ReviewDTO reviewDTO) {
+    public ReviewDTO createReview(Long bookId, NewReviewDTO reviewDTO) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
         
@@ -52,7 +54,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
      @Transactional
-    public ReviewDTO updateReview(Long id, ReviewDTO reviewDTO) {
+    public ReviewDTO updateReview(Long id, UpdateReviewDTO reviewDTO) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + id));
         

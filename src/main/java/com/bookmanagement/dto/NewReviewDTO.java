@@ -14,8 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReviewDTO {
-    private Long id;
+public class NewReviewDTO {
     
     @NotNull(message = "Rating is required")
     @Min(value = 1, message = "Rating must be between 1 and 5")
@@ -24,7 +23,8 @@ public class ReviewDTO {
     
     private String comment;
     
-    private BookMinimalDTO book;
-    private UserSummaryDTO user;
-    private LocalDateTime createdAt;
+    @NotNull(message = "User ID is required")
+    private Long userId;
+    
+   
 }

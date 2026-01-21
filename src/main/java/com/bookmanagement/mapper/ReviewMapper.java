@@ -8,6 +8,8 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface ReviewMapper {
     ReviewDTO toDTO(Review review);
+
+    ReviewMinimalDTO toMinimalDTO(Review review);
     
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "book", ignore = true)
@@ -15,5 +17,12 @@ public interface ReviewMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Review toEntity(ReviewDTO dto);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "book", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    Review toEntity(NewReviewDTO dto);
 }
 

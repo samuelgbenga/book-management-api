@@ -4,6 +4,8 @@ import com.bookmanagement.annotation.AdminOnly;
 import com.bookmanagement.annotation.UserOrAdmin;
 import com.bookmanagement.dto.*;
 import com.bookmanagement.service.BookService;
+import com.bookmanagement.utils.PagedResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,7 +30,7 @@ public class BookController {
     @GetMapping
     @UserOrAdmin
     @Operation(summary = "Get all books with filtering and pagination")
-    public ResponseEntity<Page<BookDTO>> getAllBooks(
+    public ResponseEntity<PagedResponse<BookPaginationDTO>> getAllBooks(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) Long authorId,
@@ -39,11 +41,24 @@ public class BookController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate publishedEnd,
             @RequestParam(required = false) String sortBy) {
         
-        Page<BookDTO> books = bookService.getAllBooks(
-                page, size, authorId, categoryId, ratingMin, ratingMax,
-                publishedStart, publishedEnd, sortBy
+
+         GetAllBookParamsDTO getAllBookParamsDTO = new GetAllBookParamsDTO( page,size,authorId,
+                                                                    categoryId,
+                                                                    ratingMin,
+                                                                    ratingMax,
+                                                                    publishedStart,
+                                                                    publishedEnd,
+                                                                    sortBy
+                                                            );
+
+        Page<BookPaginationDTO> books = bookService.getAllBooks(getAllBookParamsDTO);
+        PagedResponse<BookPaginationDTO> response = new PagedResponse<>(
+                books.getContent(),
+                books.getNumber(),
+                books.getSize(),
+                books.getTotalElements()
         );
-        return ResponseEntity.ok(books);
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{id}")
@@ -57,7 +72,7 @@ public class BookController {
     @PostMapping
     @AdminOnly
     @Operation(summary = "Create a new book (Admin only)")
-    public ResponseEntity<BookDTO> createBook(@Valid @RequestBody BookDTO bookDTO) {
+    public ResponseEntity<BookDTO> createBook(@Valid @RequestBody NewBookDTO bookDTO) {
         BookDTO createdBook = bookService.createBook(bookDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdBook);
     }
@@ -67,7 +82,7 @@ public class BookController {
     @Operation(summary = "Update an existing book (Admin only)")
     public ResponseEntity<BookDTO> updateBook(
             @PathVariable Long id,
-            @Valid @RequestBody BookDTO bookDTO) {
+            @Valid @RequestBody NewBookDTO bookDTO) {
         BookDTO updatedBook = bookService.updateBook(id, bookDTO);
         return ResponseEntity.ok(updatedBook);
     }

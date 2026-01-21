@@ -13,6 +13,8 @@ public interface BookMapper {
     @Mapping(target = "categoryIds", expression = "java(mapCategoryIds(book.getCategories()))")
     BookDTO toDTO(Book book);
 
+    BookPaginationDTO toPaginationDTO(Book book);
+
     BookMinimalDTO toBookMinimalDTO(Book book);
     
     @Mapping(target = "id", ignore = true)
@@ -23,6 +25,8 @@ public interface BookMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Book toEntity(BookDTO dto);
+
+    Book toEntity(NewBookDTO dto);
     
     BookDetailDTO toDetailDTO(Book book);
     BookSummaryDTO toSummaryDTO(Book book);

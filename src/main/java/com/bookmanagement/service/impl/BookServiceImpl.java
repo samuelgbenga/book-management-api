@@ -29,39 +29,36 @@ public class BookServiceImpl  implements BookService {
     private final BookMapper bookMapper;
 
     @Override
-    public Page<BookDTO> getAllBooks(
-            Integer page, Integer size, Long authorId, Long categoryId,
-            Double ratingMin, Double ratingMax, LocalDate publishedStart,
-            LocalDate publishedEnd, String sortBy) {
+    public Page<BookPaginationDTO> getAllBooks(GetAllBookParamsDTO params) {
         
         Pageable pageable = PageRequest.of(
-                page != null ? page : 0,
-                size != null ? size : 20,
-                Sort.by(sortBy != null ? sortBy : "id")
+                params.page() != null ? params.page() : 0,
+                params.size() != null ? params.size() : 20,
+                Sort.by(params.sortBy() != null ? params.sortBy() : "id")
         );
         
         Specification<Book> spec = Specification.where(null);
+
+        if (params.authorId() != null) {
+            spec = spec.and(BookSpecification.hasAuthorId(params.authorId()));
+        }
+        if (params.categoryId() != null) {
+            spec = spec.and(BookSpecification.hasCategoryId(params.categoryId()));
+        }
+        if (params.ratingMin() != null) {
+            spec = spec.and(BookSpecification.hasRatingGreaterThanOrEqual(params.ratingMin()));
+        }
+        if (params.ratingMax() != null) {
+            spec = spec.and(BookSpecification.hasRatingLessThanOrEqual(params.ratingMax()));
+        }
+        if (params.publishedStart() != null) {
+            spec = spec.and(BookSpecification.publishedAfter(params.publishedStart()));
+        }
+        if (params.publishedEnd() != null) {
+            spec = spec.and(BookSpecification.publishedBefore(params.publishedEnd()));
+        }
         
-        if (authorId != null) {
-            spec = spec.and(BookSpecification.hasAuthorId(authorId));
-        }
-        if (categoryId != null) {
-            spec = spec.and(BookSpecification.hasCategoryId(categoryId));
-        }
-        if (ratingMin != null) {
-            spec = spec.and(BookSpecification.hasRatingGreaterThanOrEqual(ratingMin));
-        }
-        if (ratingMax != null) {
-            spec = spec.and(BookSpecification.hasRatingLessThanOrEqual(ratingMax));
-        }
-        if (publishedStart != null) {
-            spec = spec.and(BookSpecification.publishedAfter(publishedStart));
-        }
-        if (publishedEnd != null) {
-            spec = spec.and(BookSpecification.publishedBefore(publishedEnd));
-        }
-        
-        return bookRepository.findAll(spec, pageable).map(bookMapper::toDTO);
+        return bookRepository.findAll(spec, pageable).map(bookMapper::toPaginationDTO);
     }
 
     @Override
@@ -73,7 +70,7 @@ public class BookServiceImpl  implements BookService {
 
     @Override
     @Transactional
-    public BookDTO createBook(BookDTO bookDTO) {
+    public BookDTO createBook(NewBookDTO bookDTO) {
         if (bookRepository.findByIsbn(bookDTO.getIsbn()).isPresent()) {
             throw new DuplicateResourceException("Book with ISBN " + bookDTO.getIsbn() + " already exists");
         }
@@ -101,17 +98,45 @@ public class BookServiceImpl  implements BookService {
 
     @Override
     @Transactional
-    public BookDTO updateBook(Long id, BookDTO bookDTO) {
-        Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + id));
+    public BookDTO updateBook(Long id, NewBookDTO bookDTO) {
+        Book book = findBookById(id);
         
-        if (bookDTO.getIsbn() != null && !bookDTO.getIsbn().equals(book.getIsbn())) {
-            if (bookRepository.findByIsbn(bookDTO.getIsbn()).isPresent()) {
-                throw new DuplicateResourceException("Book with ISBN " + bookDTO.getIsbn() + " already exists");
-            }
-            book.setIsbn(bookDTO.getIsbn());
+        updateIsbnIfChanged(book, bookDTO.getIsbn());
+        updateBasicFields(book, bookDTO);
+        updateAuthorIfProvided(book, bookDTO.getAuthorId());
+        updateCategoriesIfProvided(book, bookDTO.getCategoryIds());
+        
+        Book updatedBook = bookRepository.save(book);
+        return bookMapper.toDTO(updatedBook);
+    }
+
+    /**
+     * Finds book by ID or throws exception
+     */
+    private Book findBookById(Long id) {
+        return bookRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + id));
+    }
+
+    /**
+     * Updates ISBN if changed and validates uniqueness
+     */
+    private void updateIsbnIfChanged(Book book, String newIsbn) {
+        if (newIsbn == null || newIsbn.equals(book.getIsbn())) {
+            return;
         }
         
+        if (bookRepository.findByIsbn(newIsbn).isPresent()) {
+            throw new DuplicateResourceException("Book with ISBN " + newIsbn + " already exists");
+        }
+        
+        book.setIsbn(newIsbn);
+    }
+
+    /**
+     * Updates basic book fields (title, publishedDate)
+     */
+    private void updateBasicFields(Book book, NewBookDTO bookDTO) {
         if (bookDTO.getTitle() != null) {
             book.setTitle(bookDTO.getTitle());
         }
@@ -119,27 +144,53 @@ public class BookServiceImpl  implements BookService {
         if (bookDTO.getPublishedDate() != null) {
             book.setPublishedDate(bookDTO.getPublishedDate());
         }
-        
-        if (bookDTO.getAuthorId() != null) {
-            Author author = authorRepository.findById(bookDTO.getAuthorId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + bookDTO.getAuthorId()));
-            book.setAuthor(author);
+    }
+
+    /**
+     * Updates book's author if authorId is provided
+     */
+    private void updateAuthorIfProvided(Book book, Long authorId) {
+        if (authorId == null) {
+            return;
         }
         
-        if (bookDTO.getCategoryIds() != null && !bookDTO.getCategoryIds().isEmpty()) {
-            Set<Category> categories = bookDTO.getCategoryIds().stream()
-                    .map(categoryId -> categoryRepository.findById(categoryId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId)))
-                    .collect(Collectors.toSet());
-            book.setCategories(categories);
+        Author author = authorRepository.findById(authorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + authorId));
+        
+        book.setAuthor(author);
+    }
+
+    /**
+     * Updates book's categories if categoryIds are provided
+     */
+    private void updateCategoriesIfProvided(Book book, Set<Long> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return;
         }
         
-        Book updatedBook = bookRepository.save(book);
-        return bookMapper.toDTO(updatedBook);
+        Set<Category> categories = fetchCategoriesByIds(categoryIds);
+        book.setCategories(categories);
+    }
+
+    /**
+     * Fetches all categories by their IDs
+     */
+    private Set<Category> fetchCategoriesByIds(Set<Long> categoryIds) {
+        return categoryIds.stream()
+                .map(this::findCategoryById)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Finds category by ID or throws exception
+     */
+    private Category findCategoryById(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
     }
 
     @Override
-     @Transactional
+    @Transactional
     public void deleteBook(Long id) {
         if (!bookRepository.existsById(id)) {
             throw new ResourceNotFoundException("Book not found with id: " + id);

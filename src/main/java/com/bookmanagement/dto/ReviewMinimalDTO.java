@@ -14,17 +14,14 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReviewDTO {
+public class ReviewMinimalDTO {
     private Long id;
     
-    @NotNull(message = "Rating is required")
-    @Min(value = 1, message = "Rating must be between 1 and 5")
-    @Max(value = 5, message = "Rating must be between 1 and 5")
     private Integer rating;
     
     private String comment;
-    
-    private BookMinimalDTO book;
+   
     private UserSummaryDTO user;
+    
     private LocalDateTime createdAt;
 }
