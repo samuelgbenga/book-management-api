@@ -80,10 +80,10 @@ public class BookController {
     @PutMapping("/{id}")
     @AdminOnly
     @Operation(summary = "Update an existing book (Admin only)")
-    public ResponseEntity<BookDTO> updateBook(
+    public ResponseEntity<BookDetailDTO> updateBook(
             @PathVariable Long id,
             @Valid @RequestBody NewBookDTO bookDTO) {
-        BookDTO updatedBook = bookService.updateBook(id, bookDTO);
+        BookDetailDTO updatedBook = bookService.updateBook(id, bookDTO);
         return ResponseEntity.ok(updatedBook);
     }
     

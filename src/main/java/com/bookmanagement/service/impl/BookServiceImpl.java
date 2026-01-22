@@ -34,7 +34,7 @@ public class BookServiceImpl  implements BookService {
         Pageable pageable = PageRequest.of(
                 params.page() != null ? params.page() : 0,
                 params.size() != null ? params.size() : 20,
-                Sort.by(params.sortBy() != null ? params.sortBy() : "id")
+                createSort(params.sortBy())
         );
         
         Specification<Book> spec = Specification.where(null);
@@ -59,6 +59,42 @@ public class BookServiceImpl  implements BookService {
         }
         
         return bookRepository.findAll(spec, pageable).map(bookMapper::toPaginationDTO);
+    }
+
+
+        private Sort createSort(String sortBy) {
+        if (sortBy == null || sortBy.isBlank()) {
+            return Sort.by(Sort.Direction.ASC, "id"); // default sort
+        }
+        
+        // Handle format: "title,desc" or "title,asc" or just "title"
+        String[] parts = sortBy.split(",");
+        String property = parts[0].trim();
+        
+        // Validate the property exists in Book entity
+        if (!isValidSortProperty(property)) {
+            throw new IllegalArgumentException("Invalid sort property: " + property);
+        }
+        
+        Sort.Direction direction = Sort.Direction.ASC; // default
+        if (parts.length > 1) {
+            String directionStr = parts[1].trim().toUpperCase();
+            if (directionStr.equals("DESC")) {
+                direction = Sort.Direction.DESC;
+            }
+        }
+        
+        return Sort.by(direction, property);
+    }
+
+    /**
+     * Validates if the property is a valid sortable field in Book entity
+     */
+    private boolean isValidSortProperty(String property) {
+        Set<String> validProperties = Set.of(
+            "id", "title", "isbn", "publishedDate", "createdAt", "updatedAt"
+        );
+        return validProperties.contains(property);
     }
 
     @Override
@@ -98,7 +134,7 @@ public class BookServiceImpl  implements BookService {
 
     @Override
     @Transactional
-    public BookDTO updateBook(Long id, NewBookDTO bookDTO) {
+    public BookDetailDTO updateBook(Long id, NewBookDTO bookDTO) {
         Book book = findBookById(id);
         
         updateIsbnIfChanged(book, bookDTO.getIsbn());
@@ -107,7 +143,7 @@ public class BookServiceImpl  implements BookService {
         updateCategoriesIfProvided(book, bookDTO.getCategoryIds());
         
         Book updatedBook = bookRepository.save(book);
-        return bookMapper.toDTO(updatedBook);
+        return bookMapper.toDetailDTO(updatedBook);
     }
 
     /**
