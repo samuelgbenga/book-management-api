@@ -58,7 +58,7 @@ mvn spring-boot:run
 The application will start on `http://localhost:8080`
 
 ### 4. Access H2 Console (Development)
-To Run on Test for a quick setup without setup database:
+To Run on Test for a quick setup without setting up database:
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=test
 ```
@@ -310,28 +310,6 @@ src/main/java/com/bookmanagement/
    - Custom annotations `@AdminOnly` and `@UserOrAdmin`
    - JWT-based authentication with Spring Security
 
-## 🧪 Testing
-
-### Run Unit Tests
-
-```bash
-mvn test
-```
-
-### Run Integration Tests
-
-```bash
-mvn verify
-```
-
-### Test Coverage
-
-The project includes comprehensive unit tests for:
-- Services (business logic)
-- Controllers (API endpoints)
-- Validators (ISBN validation)
-- Repositories (data access)
-
 ## 🔒 Security Features
 
 1. **JWT Authentication** - Stateless token-based auth
@@ -350,6 +328,7 @@ The project includes comprehensive unit tests for:
 - `categories` - Book categories
 - `book_categories` - Many-to-many relationship
 - `reviews` - User reviews for books
+- `roles` - users roles e.g ADMIN etc
 
 ### Relationships
 
@@ -357,42 +336,33 @@ The project includes comprehensive unit tests for:
 - Book → Categories (Many-to-Many)
 - Book → Reviews (One-to-Many)
 - User → Reviews (One-to-Many)
+- Author -> Role (Many-to-Many)
 
 ## ⚙️ Configuration
 
 ### Application Properties
 
-Key configuration in `application.yml`:
+Key configuration in `application-test.properties`:
 
-```yaml
-spring:
-  datasource:
-    url: jdbc:h2:mem:bookdb  # Change for production
-  jpa:
-    hibernate:
-      ddl-auto: create-drop  # Change to 'validate' in production
-
-application:
-  security:
-    jwt:
-      secret-key: <your-secret>
-      expiration: 86400000  # 24 hours
+```bash
+spring.datasource.url=jdbc:h2:mem:bookdb
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
 ```
 
 ### Production Configuration
 
 For production deployment:
 
-1. Switch to PostgreSQL:
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/bookdb
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: validate
+1. Switch to PostgreSQL in application-prod.properties:
+```bash
+spring.datasource.url=jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:bookdb}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.hikari.maximum-pool-size=20
+spring.datasource.hikari.minimum-idle=5
 ```
 
 2. Use environment variables for sensitive data
@@ -404,6 +374,8 @@ spring:
 # 📦 Solution Architecture & Design Overview
 
 This document explains the architectural decisions, security model, development workflow, validation rules, and test coverage strategy used in building the application.
+Based on the role based requirement from the document a login endpoint is required in my approach.
+endpoint: api/auth/login
 
 ---
 
@@ -508,7 +480,7 @@ Included ISBN utility with proper formatting, e.g:
 
 ---
 
-## 🔑 6. Login Endpoint
+## 🔑 6. Login Endpoint :api/auth/login
 
 A dedicated login endpoint was implemented to:
 
@@ -520,19 +492,19 @@ A dedicated login endpoint was implemented to:
 
 ## 🧱 7. Security Behavior Notes
 
-Spring Security may still attempt to parse JWT on public endpoints if not properly excluded in the filter chain. Ensuring `permitAll()` in configuration resolves this behavior.
-What was done to mitigate this was to exclude those endpoint from filter to prevent the 
-applicaton from breaking instead returning a more intuitive error message.
+Spring Security may still attempt to parse JWT tokens on endpoints that are marked as permitAll. This happens when a JWT is included in the request header, causing the filter chain to validate the token. If the token is expired, it breaks the request flow even though the endpoint itself is meant to be public, because permitAll does not prevent the request from passing through the security filters.
+To mitigate this, those endpoints were explicitly excluded from the JWT filter so that expired or invalid tokens do not affect public access or break the application.
 
 ---
 
-## 📚 8. Dynamic Book Search via Specification
+## 📚 8. Dynamic Book Search via Specification and Automatic Rate review.
 
 Dynamic filtering of books was implemented using **Spring JPA Specifications**:
 
 > Provides flexible criteria-based searching without breaking when parameters are missing.
 
 This pattern is commonly recommended for flexible filtering in JPA.
+> Book Ratings a recalculating for every new or updated review before insertion to db.
 
 ---
 
@@ -540,10 +512,15 @@ This pattern is commonly recommended for flexible filtering in JPA.
 
 **Tests written for:**
 
-- Validation utilities (ISBN, password)
-- Authentication & JWT service
-- Role assignment logic
+- Validation utilities (ISBN)
 - Service layer behaviors
+## 🧪 Testing
+
+### Run Unit Tests
+
+```bash
+mvn test
+```
 
 **Coverage tracked via JaCoCo:**
 
