@@ -11,4 +11,5 @@ public interface CategoryMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "books", ignore = true)
     Category toEntity(CategoryDTO dto);
+    Category toEntity(NewCategoryDTO dto);
 }
