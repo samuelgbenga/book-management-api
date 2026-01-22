@@ -58,6 +58,10 @@ mvn spring-boot:run
 The application will start on `http://localhost:8080`
 
 ### 4. Access H2 Console (Development)
+To Run on Test for a quick setup without setup database:
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=test
+```
 
 - URL: `http://localhost:8080/h2-console`
 - JDBC URL: `jdbc:h2:mem:bookdb`
@@ -395,91 +399,166 @@ spring:
 3. Enable HTTPS
 4. Configure CORS for your frontend domain
 
-## 🚀 Deployment
 
-### Build for Production
 
-```bash
-mvn clean package -DskipTests
-```
+# 📦 Solution Architecture & Design Overview
 
-The executable JAR will be in `target/book-management-api-1.0.0.jar`
-
-### Run Production Build
-
-```bash
-java -jar target/book-management-api-1.0.0.jar
-```
-
-### Docker Deployment (Optional)
-
-```dockerfile
-FROM openjdk:21-jdk-slim
-COPY target/book-management-api-1.0.0.jar app.jar
-ENTRYPOINT ["java", "-jar", "/app.jar"]
-```
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Port 8080 already in use**
-   - Change port in `application.yml`: `server.port: 8081`
-
-2. **JWT token expired**
-   - Login again to get a new token
-
-3. **403 Forbidden**
-   - Ensure you're using the correct role (ADMIN for management endpoints)
-
-## 📖 Design Decisions & Assumptions
-
-### Design Decisions
-
-1. **H2 In-Memory Database** - Chosen for easy setup and testing. Switch to PostgreSQL for production.
-
-2. **JWT Authentication** - Stateless authentication suitable for RESTful APIs and microservices.
-
-3. **MapStruct for DTO Mapping** - Compile-time mapping for better performance and type safety.
-
-4. **Custom Annotations** - Improves code readability and reduces boilerplate for validation and security.
-
-5. **Specification Pattern** - Enables dynamic query building for complex filtering without query method explosion.
-
-### Assumptions
-
-1. **Single User Review per Book** - Not enforced but could be added as a business rule.
-
-2. **Soft Deletes Not Implemented** - Hard deletes are used; implement soft deletes for audit requirements.
-
-3. **Review Rating Range** - Ratings are 1-5 stars (validated).
-
-4. **Email Uniqueness** - Both users and authors must have unique emails.
-
-5. **Category Assignment** - Books can have multiple categories but must have at least one.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 👥 Authors
-
-- Your Name - Initial work
-
-## 🙏 Acknowledgments
-
-- Spring Boot Documentation
-- Baeldung Spring Security Tutorials
-- Clean Code by Robert C. Martin
+This document explains the architectural decisions, security model, development workflow, validation rules, and test coverage strategy used in building the application.
 
 ---
 
-**Note:** This is a production-ready API implementation with comprehensive error handling, validation, security, and testing. For any questions or issues, please open an issue on GitHub.
+## 📌 1. Identified Requirements & Missing Features
+
+During initial analysis, it was observed that the documentation did not provide a way for newly created users to authenticate. To address this gap, the following additions were made:
+
+- Introduced a **login endpoint** for both regular and admin users.
+- Added **JWT-based authentication**.
+- Implemented **role-based authorization** for secured endpoints.
+- Used the `create-user` endpoint as the **registration path** for new users.
+
+Users authenticate with credentials and are authorized based on their assigned roles stored in the JWT.
+
+---
+
+## 🚀 2. System Modeling & Bootstrapping Process
+
+**Approach:**
+
+1. **Entity Modeling**
+   - Designed entities using an ERD.
+   - Determined relationships and domain boundaries.
+
+2. **Service & Utility Identification**
+   - Outlined required services, utilities, and custom logic ahead of implementation.
+
+3. **Project Bootstrapping**
+   - Project generated using **Spring Initializr**.
+   - Development followed the pattern:
+
+
+
+SOLID principles were observed to ensure maintainability and low coupling.
+
+---
+
+## 🔐 3. Authentication & Authorization Mechanism
+
+### **Authentication**
+Implemented using **JWT tokens**, where:
+
+- User details + roles are encoded into the token.
+- Tokens are sent on every secured request.
+- Stateless design eliminates session persistence.
+
+### **Authorization**
+Handled through:
+
+- Method-level security with custom annotations.
+- Role checks extracted from JWT during request filtering.
+
+### **Access Control Rules**
+
+| Endpoint | Access |
+|---|---|
+| `POST /users` | Public (`permitAll`) |
+| `POST /login` | Public (`permitAll`) |
+| Admin Operations | `ADMIN` only |
+| General Operations | `USER` or `ADMIN` |
+
+---
+
+## 🧩 4. Role Management & Constraints
+
+### **Role Entity**
+Instead of enums, roles were modeled as a **Role Entity** to support future scalability and dynamic role creation.
+
+### **Base Roles**
+Two base roles are seeded:
+
+- `ADMIN`
+- `USER`
+
+### **Constraints Applied**
+
+- Default `ADMIN` is created automatically at startup.
+- Users cannot self-register as `ADMIN`.
+- Only admins can assign or update elevated roles.
+- If a non-existing role is provided during sign-up, system assigns the default `USER` role.
+
+**Startup Logs:**
+- Username: admin
+- Email: admin@bookmanagement.com
+- Password: admin123$
+⚠️ IMPORTANT: Change this password immediately!
+
+---
+
+## 🛡 5. Validation Layer
+
+### **Password Validation**
+Validation implemented using a custom annotation enforcing:
+
+- Minimum 6 characters
+- At least 1 digit
+- At least 1 special character
+
+### **ISBN Validation**
+Included ISBN utility with proper formatting, e.g:
+
+
+---
+
+## 🔑 6. Login Endpoint
+
+A dedicated login endpoint was implemented to:
+
+- Authenticate both user types
+- Return JWT token
+- Support authorization flow for secured resources
+
+---
+
+## 🧱 7. Security Behavior Notes
+
+Spring Security may still attempt to parse JWT on public endpoints if not properly excluded in the filter chain. Ensuring `permitAll()` in configuration resolves this behavior.
+What was done to mitigate this was to exclude those endpoint from filter to prevent the 
+applicaton from breaking instead returning a more intuitive error message.
+
+---
+
+## 📚 8. Dynamic Book Search via Specification
+
+Dynamic filtering of books was implemented using **Spring JPA Specifications**:
+
+> Provides flexible criteria-based searching without breaking when parameters are missing.
+
+This pattern is commonly recommended for flexible filtering in JPA.
+
+---
+
+## 🧪 9. Test Coverage & Quality Assurance
+
+**Tests written for:**
+
+- Validation utilities (ISBN, password)
+- Authentication & JWT service
+- Role assignment logic
+- Service layer behaviors
+
+**Coverage tracked via JaCoCo:**
+
+### 🧪 Test Coverage (JaCoCo)
+
+To run tests and generate the coverage report:
+
+```bash
+mvn clean test jacoco:report
+target/site/jacoco/index.html
+- for MacOS
+open target/site/jacoco/index.html
+- for windows
+start target/site/jacoco/index.html
+
+
+
+
